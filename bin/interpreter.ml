@@ -9,12 +9,9 @@ type expr =
 let rec string_of_expr (expr : expr) : string =
   match expr with
   | Var name -> name
-  | Let (name, value, body) ->
-      Printf.sprintf "(let (%s %s) %s)" name (string_of_expr value)
-        (string_of_expr body)
+  | Let (name, value, body) -> Printf.sprintf "(let (%s %s) %s)" name (string_of_expr value) (string_of_expr body)
   | Fun (name, body) -> Printf.sprintf "(fun %s %s)" name (string_of_expr body)
-  | Apply (func, arg) ->
-      Printf.sprintf "(%s %s)" (string_of_expr func) (string_of_expr arg)
+  | Apply (func, arg) -> Printf.sprintf "(%s %s)" (string_of_expr func) (string_of_expr arg)
 
 (*---------*)
 (* ANALYSE *)
@@ -33,9 +30,11 @@ let explode str =
   in
   explode_inner 0 []
 
-(** [explode str] convertit une liste de caractères en une chaîne de caractères. *)
+(** [explode chars] convertit une liste de caractères en une chaîne de caractères. *)
 let rec implode chars =
-  match chars with [] -> "" | h :: t -> string_of_char h ^ implode t
+  match chars with 
+  | [] -> "" 
+  | h :: t -> string_of_char h ^ implode t
 
 (** [parse_expr input] analyse l’entrée [input] et retourne une erreur si elle ne correspond pas à une expression du langage, ou bien une paire [(expr, rest)] s’il existe un préfixe [prefix] tel que [prefix @ rest = input] et [expr] est l’arbre de syntaxe abstraite correspondant à [prefix]. *)
 let rec parse_expr (input : char list) : (expr * char list) option =
@@ -47,23 +46,83 @@ let rec parse_expr (input : char list) : (expr * char list) option =
 
 (** [parse_let input] analyse l’entrée [input] pour y trouver un préfixe correspondant à une expression de la forme '(let (name value) body)'. Une erreur est retournée s’il n’y a pas de telle expression au début de [input] ou si elle est mal formée. *)
 and parse_let (input : char list) : (expr * char list) option =
-  (* À COMPLÉTER! *)
-  None
+  match input with
+  | '(' :: 'l' :: 'e' :: 't' :: ' ' :: _ :: rest_after_prefix -> (    
+    let parts = parse_ident rest_after_prefix
+    in
+    match parts with
+      Some (name, rest_after_name) -> (
+      let parts = parse_expr rest_after_name
+      in
+      match parts with
+      | Some (expr1,rest_after_expr1) -> (
+        let parts = parse_expr rest_after_expr1
+        in
+        match parts with
+        | Some (expr2,rest_after_expr2) -> (
+          match rest_after_expr2 with
+          | [')'] -> Some (Let(name, expr1, expr2),[]);
+          | _ -> None;
+        )
+        | None -> None
+      )
+      | None -> None
+    )
+    | None -> None
+  );
+  | _ -> None;
 
 (** [parse_fun input] analyse l’entrée [input] pour y trouver un préfixe correspondant à une expression de la forme '(fun name body)'. Une erreur est retournée s’il n’y a pas de telle expression au début de [input] ou si elle est mal formée. *)
 and parse_fun (input : char list) : (expr * char list) option =
-  (* À COMPLÉTER! *)
-  None
+  match input with
+  | '(' :: 'f' :: 'u' :: 'n' :: ' ' :: _ :: rest_after_prefix -> (    
+    let parts = parse_ident rest_after_prefix
+    in
+    match parts with
+      Some (name, rest_after_name) -> (
+      let parts = parse_expr rest_after_name
+      in
+      match parts with
+      | Some (expr,rest_after_expr) -> (
+        match rest_after_expr with
+        | [')'] -> Some (Fun(name, expr),[]);
+        | _ -> None;
+      )
+      | None -> None
+    )
+    | None -> None
+  );
+  | _ -> None;
 
 (** [parse_apply input] analyse l’entrée [input] pour y trouver un préfixe correspondant à une expression de la forme '(func arg)'. Une erreur est retournée s’il n’y a pas de telle expression au début de [input] ou si elle est mal formée. *)
 and parse_apply (input : char list) : (expr * char list) option =
-  (* À COMPLÉTER! *)
-  None
+  match input with
+  | '(' :: ' ' :: _ :: rest_after_prefix -> (
+    let parts = parse_expr rest_after_prefix
+    in
+    match parts with
+    | None -> None;
+    | Some (expr1,rest_after_expr1) -> (
+      let parts = parse_expr rest_after_expr1
+      in
+      match parts with
+      | None -> None;
+      | Some (expr2,rest_after_expr2) -> (
+        match rest_after_expr2 with
+        | [')'] -> Some (Apply(expr1, expr2),[]);
+        | _ -> None;
+      )
+    )
+  );
+  | _ -> None;
 
 (** [parse_var input] analyse l’entrée [input] pour y trouver un préfixe correspondant à une variable libre. Une erreur est retournée s’il n’y a pas de telle valeur au début de [input]. *)
 and parse_var (input : char list) : (expr * char list) option =
-  (* À COMPLÉTER! *)
-  None
+  let parts = parse_ident input
+    in
+    match parts with
+    | None -> None;
+    | Some (name, rest) -> Some (Var(name), rest);
 
 (** [parse_ident input] analyse l’entrée [input] pour y trouver un préfixe correspondant à un nom non-vide. Une erreur est retournée s’il n’y a pas de telle valeur au début de [input]. *)
 and parse_ident (input : char list) : (string * char list) option =
@@ -73,8 +132,20 @@ and parse_ident (input : char list) : (string * char list) option =
     || ('0' <= x && x <= '9')
     || x == '-'
   in
-  (* À COMPLÉTER! *)
-  None
+  (
+    if (not (is_letter (List.nth input 0))) then None else (
+      let rec read (input : char list): char list = 
+        match input with 
+        | first :: rest -> (
+          if (is_letter first)
+            then first :: read rest
+        else  [first]
+        )
+        | _ -> []
+      in
+      implode(read input)
+    ) 
+  )
 
 (*------------*)
 (* ÉVALUATION *)
