@@ -61,7 +61,7 @@ and parse_let (input : char list) : (expr * char list) option =
         match parts with
         | Some (expr2,rest_after_expr2) -> (
           match rest_after_expr2 with
-          | [')'] -> Some (Let(name, expr1, expr2),[]);
+          | ')' :: rest -> Some (Let(name, expr1, expr2), rest);
           | _ -> None;
         )
         | None -> None
@@ -85,7 +85,7 @@ and parse_fun (input : char list) : (expr * char list) option =
       match parts with
       | Some (expr,rest_after_expr) -> (
         match rest_after_expr with
-        | [')'] -> Some (Fun(name, expr),[]);
+        | ')' :: rest -> Some (Fun(name, expr), rest);
         | _ -> None;
       )
       | None -> None
@@ -109,7 +109,7 @@ and parse_apply (input : char list) : (expr * char list) option =
       | None -> None;
       | Some (expr2,rest_after_expr2) -> (
         match rest_after_expr2 with
-        | [')'] -> Some (Apply(expr1, expr2),[]);
+        | ')' :: rest -> Some (Apply(expr1, expr2), rest);
         | _ -> None;
       )
     )
