@@ -125,27 +125,25 @@ and parse_var (input : char list) : (expr * char list) option =
     | Some (name, rest) -> Some (Var(name), rest);
 
 (** [parse_ident input] analyse l’entrée [input] pour y trouver un préfixe correspondant à un nom non-vide. Une erreur est retournée s’il n’y a pas de telle valeur au début de [input]. *)
-and parse_ident (input : char list) : (string * char list) option =
+  and parse_ident (input : char list) : (string * char list) option =
   let is_letter x =
     ('a' <= x && x <= 'z')
     || ('A' <= x && x <= 'Z')
     || ('0' <= x && x <= '9')
     || x == '-'
   in
-  (
-    if (not (is_letter (List.nth input 0))) then None else (
-      let rec read (input : char list): char list = 
-        match input with 
-        | first :: rest -> (
-          if (is_letter first)
-            then first :: read rest
-        else  [first]
-        )
-        | _ -> []
-      in
-      implode(read input)
-    ) 
-  )
+  let rec pull (input : char list) (pulled : char list) : (char list * char list) option =
+    match input with
+    | [] -> None
+    | first :: tail -> (
+      if (is_letter first)
+        then pull tail (first :: pulled)
+      else Some (List.rev pulled, tail)
+    )
+  in 
+   match (pull input []) with
+   | None -> None
+   | Some (word,rest) -> Some (implode word, rest)
 
 (*------------*)
 (* ÉVALUATION *)
