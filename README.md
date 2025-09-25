@@ -14,4 +14,5 @@ Cependant, il est possible de rouler les fichiers clés (bin/interpreter.ml et b
   - `opam switch create 4.14.0`
   - `eval $(opam env)`
   - `opam install ocaml-lsp-server ocamlformat`
+  - `opam install dune`
 - installer [ocaml platform](https://marketplace.visualstudio.com/items?itemName=ocamllabs.ocaml-platform)
