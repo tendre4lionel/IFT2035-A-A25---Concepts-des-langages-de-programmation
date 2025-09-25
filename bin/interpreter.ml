@@ -132,13 +132,13 @@ and parse_var (input : char list) : (expr * char list) option =
     || ('0' <= x && x <= '9')
     || x == '-'
   in
-  let rec pull (input : char list) (pulled : char list) : (char list * char list) option =
+  let rec pull (input : char list) (output : char list) : (char list * char list) option =
     match input with
     | [] -> None
-    | first :: tail -> (
-      if (is_letter first)
-        then pull tail (first :: pulled)
-      else Some (List.rev pulled, tail)
+    | pulled :: remains -> (
+      if (is_letter pulled)
+        then pull remains (pulled :: output)
+      else Some (List.rev output, remains)
     )
   in 
    match (pull input []) with
